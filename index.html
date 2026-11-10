@@ -189,6 +189,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .inp:focus{border-color:var(--accent)}
 .grid-more{grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;padding:12px}
 .bi-price{font-size:13px;font-weight:500;color:var(--text);width:56px;text-align:right}
+.bi-price-inp{width:78px;text-align:right;font-size:13px;font-weight:500;color:var(--text);background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 6px;font-family:var(--font-body);outline:none;cursor:text;-moz-appearance:textfield}
+.bi-price-inp::-webkit-outer-spin-button,.bi-price-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.bi-price-inp:hover{border-color:var(--border2)}
+.bi-price-inp:focus{border-color:var(--accent);background:var(--bg3)}
+.bi-price-inp.sifir{border-color:var(--amber);color:var(--amber)}
+.bi-price-inp.manuel{color:var(--blue,#60a5fa)}
+.bi-tl{font-size:12px;color:var(--text3)}
 .bi-del{width:20px;height:20px;border-radius:4px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
 .bi-del:hover{background:rgba(255,77,109,0.15);color:var(--red)}
 .basket-footer{padding:14px 16px;border-top:1px solid var(--border)}
@@ -836,7 +843,7 @@ function renderBasket(){
     return `<div class="basket-item">
       <div class="bi-name">${esc(item.name)}</div>
       <div class="bi-weight">${miktar}</div>
-      <div class="bi-price">${item.price.toFixed(2)} ₺</div>
+      <div style="display:flex;align-items:center;gap:3px" title="Fiyatı değiştirmek için tıklayıp yazın"><input class="bi-price-inp ${item.price?'':'sifir'} ${item.manuel?'manuel':''}" type="number" step="any" min="0" inputmode="decimal" value="${item.price.toFixed(2)}" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="basketFiyat(${i},this.value)"/><span class="bi-tl">₺</span></div>
       <button class="bi-del" onclick="removeBasketItem(${i})">×</button>
     </div>`;
   }).join('');
@@ -854,7 +861,12 @@ function sepeteEkle(p, qty){
     basket.push({name:p.name,unit:p.unit,qty,price:parseFloat((p.price*qty).toFixed(2)),productId:p.id,unitPrice:p.price});
   }
   renderBasket();
-  if(!p.price) notify(`⚠ ${p.name} — fiyatı 0 ₺, ürünü düzenleyip fiyat girin`);
+  if(!p.price){
+    notify(`${p.name} — fiyatı sepette yazın`);
+    const idx=basket.findIndex(b=>b.productId===p.id&&!b.price);
+    setTimeout(()=>{ const inp=document.querySelectorAll('#basket-items .bi-price-inp')[idx]; if(inp) inp.focus(); },30);
+    return;
+  }
   else notify(`${p.name} — ${fmtMiktar(qty,p.unit)} eklendi`);
 }
 function addToBasket(product, qty=null){
@@ -869,11 +881,24 @@ function basketQty(i,delta){
   renderBasket();
 }
 
+// Sepette satır fiyatını elle değiştir (birim fiyat = yeni tutar / miktar)
+function basketFiyat(i,deger){
+  const it=basket[i]; if(!it) return;
+  const v=parseFloat(String(deger).replace(',','.'));
+  if(isNaN(v)||v<0){ renderBasket(); return; }
+  it.price=parseFloat(v.toFixed(2));
+  it.unitPrice=it.qty?it.price/it.qty:it.price;
+  it.manuel=true;
+  renderBasket();
+}
 function removeBasketItem(i){ basket.splice(i,1); renderBasket(); }
 function clearBasket(){ basket=[]; renderBasket(); }
 
 async function checkout(method){
   if(!basket.length){ notify('Sepet boş!'); return; }
+  if(document.activeElement && document.activeElement.classList.contains('bi-price-inp')) document.activeElement.blur();
+  const sifirlar=basket.filter(b=>!b.price);
+  if(sifirlar.length && !confirm(`Fiyatı 0 ₺ olan ürün var: ${sifirlar.map(b=>b.name).join(', ')}\nYine de satışı tamamlayayım mı?`)) return;
   const total=basket.reduce((s,i)=>s+i.price,0);
   let nakit=0, kart=0;
   if(method==='karma'){
