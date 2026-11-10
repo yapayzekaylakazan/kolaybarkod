@@ -552,6 +552,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
             <option value="barkodsuz">Barkodsuz</option>
           </select>
         </div>
+        <button class="btn btn-sm" onclick="showKategoriler()">✎ Kategoriler</button>
         <button class="btn btn-accent btn-sm" onclick="showAddProduct()">+ Ürün Ekle</button>
       </div>
       <table class="tbl" id="stock-table">
@@ -943,10 +944,11 @@ function posAramaDegisti(){ renderPosProducts(); }
 
 function renderPosProducts(){
   const products=getProducts();
-  const cats=[...new Set(products.map(p=>p.category))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const cats=tumKategoriler();
   const tabsEl=document.getElementById('cat-tabs');
   tabsEl.innerHTML=`<div class="cat-tab ${!activeCategory?'active':''}" onclick="filterPosCategory('')">Tümü (${products.length})</div>`+
-    cats.map(c=>`<div class="cat-tab ${activeCategory===c?'active':''}" onclick="filterPosCategory('${esc(c)}')">${CATEGORY_ICONS[c]||'•'} ${esc(c)}</div>`).join('');
+    cats.map(c=>`<div class="cat-tab ${activeCategory===c?'active':''}" data-kat="${esc(c)}" onclick="filterPosCategory(this.dataset.kat)">${katIkon(c)} ${esc(c)}</div>`).join('')+
+    `<div class="cat-tab" onclick="showKategoriler()" title="Kategorileri düzenle" style="border-style:dashed">✎ Kategoriler</div>`;
   const q=((document.getElementById('barcode-input')||{}).value||'').trim().toLocaleLowerCase('tr');
   let filtered=activeCategory?products.filter(p=>p.category===activeCategory):products;
   if(q) filtered=filtered.filter(p=>p.name.toLocaleLowerCase('tr').includes(q)||p.barcode.includes(q));
@@ -954,7 +956,7 @@ function renderPosProducts(){
   document.getElementById('products-grid').innerHTML=gosterilen.map(p=>`
     <div class="prod-btn" onclick="quickAdd('${p.id}')">
       <button class="pb-edit" title="Düzenle" onclick="event.stopPropagation();editProduct('${p.id}')">✎</button>
-      <div class="pb-icon">${CATEGORY_ICONS[p.category]||'📦'}</div>
+      <div class="pb-icon">${katIkon(p.category,'📦')}</div>
       <div class="pb-name">${esc(p.name)}</div>
       <div class="pb-price">${fmtFiyat(p)}</div>
       <div class="pb-stock">${fmtMiktar(p.stock,p.unit)} stok</div>
@@ -964,6 +966,123 @@ function renderPosProducts(){
 }
 
 function filterPosCategory(cat){ activeCategory=cat; renderPosProducts(); }
+
+// ============================================================
+// KATEGORİ YÖNETİMİ
+// Kategoriler ürünlerin "kategori" alanından gelir; boş (ürünsüz) kategoriler ve
+// özel simgeler mağaza ayarlarında tutulur: ayarlar.kategoriler[], ayarlar.kategori_ikon{}
+// ============================================================
+function katIkon(c, varsayilan='•'){
+  const ozel=(MAGAZA_AYAR.kategori_ikon||{})[c];
+  return ozel || CATEGORY_ICONS[c] || varsayilan;
+}
+function tumKategoriler(){
+  const s=new Set(getProducts().map(p=>p.category));
+  (MAGAZA_AYAR.kategoriler||[]).forEach(k=>s.add(k));
+  return [...s].sort((a,b)=>a.localeCompare(b,'tr'));
+}
+function katNormal(ad){ return String(ad||'').trim().replace(/\s+/g,' ').toLocaleUpperCase('tr'); }
+const KAT_IKONLAR=['💄','🎉','💍','🎁','🧸','🪴','💐','🌸','💎','⌚','🌵','📦','🎀','🎊','👑','🚗','🌿','🥜','🍫','🕯️','🎈','🧴','🪞','🧺','🛍️','📿','🖼️','✏️','🧁','🌶️','•'];
+
+function showKategoriler(){
+  const sayac={};
+  getProducts().forEach(p=>{ sayac[p.category]=(sayac[p.category]||0)+1; });
+  const kats=tumKategoriler();
+  openModal('Kategoriler',`
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="kat-yeni" class="inp" placeholder="Yeni kategori adı" onkeydown="if(event.key==='Enter')kategoriEkle()"/>
+      <button class="btn btn-accent btn-sm" style="white-space:nowrap" onclick="kategoriEkle()">+ Ekle</button>
+    </div>
+    <div style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+      ${kats.map((k,i)=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:8px">
+          <button class="btn btn-sm" style="width:34px;padding:4px" title="Simge değiştir" onclick="kategoriIkonSec(${i})">${katIkon(k)}</button>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(k)}</div>
+            <div style="font-size:11px;color:var(--text3)">${sayac[k]||0} ürün</div>
+          </div>
+          <button class="btn btn-sm" onclick="kategoriAdDegistir(${i})">Ad değiştir</button>
+          <button class="btn btn-sm btn-danger" onclick="kategoriSil(${i})">Sil</button>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px">Ad değiştirirken var olan bir kategorinin adını yazarsanız iki kategori birleşir. Silinen kategorinin ürünleri seçtiğiniz kategoriye taşınır.</div>
+  `);
+  window._katListe=kats;
+}
+async function kategoriEkle(){
+  const ad=katNormal(document.getElementById('kat-yeni').value);
+  if(!ad) return;
+  if(tumKategoriler().includes(ad)){ notify('Bu kategori zaten var'); return; }
+  try{
+    await magazaAyarKaydet({kategoriler:[...(MAGAZA_AYAR.kategoriler||[]),ad]});
+    notify('✓ '+ad+' eklendi'); showKategoriler(); renderPosProducts();
+  }catch(e){ notify('Eklenemedi: '+e.message); }
+}
+async function kategoriAdDegistir(i){
+  const eski=window._katListe[i];
+  const girilen=prompt(`"${eski}" kategorisinin yeni adı:`, eski);
+  if(girilen===null) return;
+  const yeni=katNormal(girilen);
+  if(!yeni||yeni===eski) return;
+  const birlesme=tumKategoriler().includes(yeni);
+  const n=getProducts().filter(p=>p.category===eski).length;
+  if(birlesme && !confirm(`"${yeni}" zaten var. "${eski}" kategorisindeki ${n} ürün "${yeni}" kategorisine taşınacak ve iki kategori birleşecek. Devam?`)) return;
+  try{
+    if(n) await kategoriTasi(eski,yeni);
+    const ikonlar={...(MAGAZA_AYAR.kategori_ikon||{})};
+    const eskiIkon=katIkon(eski,'');
+    if(eskiIkon && !ikonlar[yeni] && !CATEGORY_ICONS[yeni]) ikonlar[yeni]=eskiIkon;
+    delete ikonlar[eski];
+    const liste=(MAGAZA_AYAR.kategoriler||[]).filter(k=>k!==eski);
+    if(!n && !birlesme) liste.push(yeni);
+    await magazaAyarKaydet({kategoriler:liste, kategori_ikon:ikonlar});
+    if(activeCategory===eski) activeCategory=yeni;
+    await refreshProducts();
+    notify(birlesme?`✓ ${eski} → ${yeni} birleştirildi`:`✓ ${eski} → ${yeni}`);
+    showKategoriler(); renderPosProducts(); renderStock();
+  }catch(e){ notify('Değiştirilemedi: '+e.message); }
+}
+function kategoriSil(i){
+  const kat=window._katListe[i];
+  const n=getProducts().filter(p=>p.category===kat).length;
+  const digerleri=tumKategoriler().filter(k=>k!==kat);
+  if(!n){ kategoriSilOnay(kat,null); return; }
+  openModal('Kategori Sil — '+kat,`
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Bu kategoride <strong style="color:var(--text)">${n} ürün</strong> var. Ürünler silinmez, seçtiğiniz kategoriye taşınır.</div>
+    <div class="form-field"><label>Ürünleri şuraya taşı</label>
+      <select id="kat-hedef" class="inp">${digerleri.map(k=>`<option ${k==='GENEL'?'selected':''}>${esc(k)}</option>`).join('')}${digerleri.includes('GENEL')?'':'<option selected>GENEL</option>'}</select></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <div style="flex:1"></div>
+      <button class="btn" onclick="showKategoriler()">Vazgeç</button>
+      <button class="btn btn-danger" onclick="kategoriSilOnay(window._katListe[${i}],document.getElementById('kat-hedef').value)">Sil ve Taşı</button>
+    </div>`);
+}
+async function kategoriSilOnay(kat,hedef){
+  try{
+    if(hedef) await kategoriTasi(kat,hedef);
+    const ikonlar={...(MAGAZA_AYAR.kategori_ikon||{})}; delete ikonlar[kat];
+    await magazaAyarKaydet({kategoriler:(MAGAZA_AYAR.kategoriler||[]).filter(k=>k!==kat), kategori_ikon:ikonlar});
+    if(activeCategory===kat) activeCategory='';
+    await refreshProducts();
+    notify(hedef?`✓ ${kat} silindi, ürünler ${hedef} kategorisine taşındı`:`✓ ${kat} silindi`);
+    showKategoriler(); renderPosProducts(); renderStock();
+  }catch(e){ notify('Silinemedi: '+e.message); }
+}
+function kategoriIkonSec(i){
+  const kat=window._katListe[i];
+  openModal('Simge Seç — '+kat,`
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px">
+      ${KAT_IKONLAR.map(ik=>`<button class="btn" style="font-size:20px;padding:8px" onclick="kategoriIkonKaydet(${i},'${ik}')">${ik}</button>`).join('')}
+    </div>
+    <div style="display:flex;margin-top:14px"><div style="flex:1"></div><button class="btn" onclick="showKategoriler()">Geri</button></div>`);
+}
+async function kategoriIkonKaydet(i,ik){
+  const kat=window._katListe[i];
+  try{
+    await magazaAyarKaydet({kategori_ikon:{...(MAGAZA_AYAR.kategori_ikon||{}),[kat]:ik}});
+    showKategoriler(); renderPosProducts();
+  }catch(e){ notify('Kaydedilemedi: '+e.message); }
+}
 
 // Ürüne tıklayınca: sayılan birim → direkt 1 ekle; kg/lt vb. → miktar sor (terazi açıksa teraziden doldur)
 function quickAdd(id){
@@ -1126,7 +1245,7 @@ function updateBadges(){
 
 // ── ÜRÜN EKLE / DÜZENLE (tek form) ───────────────────────────
 function urunFormHTML(p){
-  const kategoriler=[...new Set(getProducts().map(x=>x.category))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const kategoriler=tumKategoriler();
   const birimSecili=p.unit||'adet';
   const kdv=p.kdvOrani==null?20:p.kdvOrani;
   return `

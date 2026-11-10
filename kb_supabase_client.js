@@ -121,6 +121,15 @@ async function urunEkle(urun) {
   return data;
 }
 
+// Kategori adını değiştir / başka kategoriyle birleştir (o kategorideki tüm ürünler taşınır)
+async function kategoriTasi(eski, yeni) {
+  const { error } = await sb.from('kb_urunler')
+    .update({ kategori: yeni, updated_at: new Date().toISOString() })
+    .eq('magaza_id', MAGAZA_ID)
+    .eq('kategori', eski);
+  if (error) throw error;
+}
+
 // Barkod başka bir aktif üründe kullanılıyor mu? (düzenlemede kontrol için)
 async function barkodBaskasindaMi(barkod, haricId) {
   if (!barkod) return null;
