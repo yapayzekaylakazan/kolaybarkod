@@ -976,15 +976,32 @@ function katIkon(c, varsayilan='•'){
   const ozel=(MAGAZA_AYAR.kategori_ikon||{})[c];
   return ozel || CATEGORY_ICONS[c] || varsayilan;
 }
+// Sıra: ayarlar.kategori_sira (kullanıcının dizdiği), listede olmayanlar sona alfabetik
 function tumKategoriler(){
   const s=new Set(getProducts().map(p=>p.category));
   (MAGAZA_AYAR.kategoriler||[]).forEach(k=>s.add(k));
-  return [...s].sort((a,b)=>a.localeCompare(b,'tr'));
+  const sira=MAGAZA_AYAR.kategori_sira||[];
+  const yer=k=>{ const i=sira.indexOf(k); return i<0?1e9:i; };
+  return [...s].sort((a,b)=>(yer(a)-yer(b))||a.localeCompare(b,'tr'));
+}
+async function kategoriKaydir(i,yon){
+  const liste=tumKategoriler();
+  const j=i+yon;
+  if(j<0||j>=liste.length) return;
+  [liste[i],liste[j]]=[liste[j],liste[i]];
+  try{ await magazaAyarKaydet({kategori_sira:liste}); showKategoriler(); renderPosProducts(); }
+  catch(e){ notify('Kaydedilemedi: '+e.message); }
+}
+async function kategoriAlfabetik(){
+  try{ await magazaAyarKaydet({kategori_sira:[]}); showKategoriler(); renderPosProducts(); notify('✓ A→Z sıralandı'); }
+  catch(e){ notify('Kaydedilemedi: '+e.message); }
 }
 function katNormal(ad){ return String(ad||'').trim().replace(/\s+/g,' ').toLocaleUpperCase('tr'); }
 const KAT_IKONLAR=['💄','🎉','💍','🎁','🧸','🪴','💐','🌸','💎','⌚','🌵','📦','🎀','🎊','👑','🚗','🌿','🥜','🍫','🕯️','🎈','🧴','🪞','🧺','🛍️','📿','🖼️','✏️','🧁','🌶️','•'];
 
 function showKategoriler(){
+  const eskiListe=document.getElementById('kat-liste');
+  const kaydirma=eskiListe?eskiListe.scrollTop:0;
   const sayac={};
   getProducts().forEach(p=>{ sayac[p.category]=(sayac[p.category]||0)+1; });
   const kats=tumKategoriler();
@@ -993,9 +1010,13 @@ function showKategoriler(){
       <input id="kat-yeni" class="inp" placeholder="Yeni kategori adı" onkeydown="if(event.key==='Enter')kategoriEkle()"/>
       <button class="btn btn-accent btn-sm" style="white-space:nowrap" onclick="kategoriEkle()">+ Ekle</button>
     </div>
-    <div style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+    <div id="kat-liste" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
       ${kats.map((k,i)=>`
         <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:8px">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <button class="qty-btn" title="Yukarı taşı" ${i===0?'disabled style="opacity:.3"':''} onclick="kategoriKaydir(${i},-1)">▲</button>
+            <button class="qty-btn" title="Aşağı taşı" ${i===kats.length-1?'disabled style="opacity:.3"':''} onclick="kategoriKaydir(${i},1)">▼</button>
+          </div>
           <button class="btn btn-sm" style="width:34px;padding:4px" title="Simge değiştir" onclick="kategoriIkonSec(${i})">${katIkon(k)}</button>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(k)}</div>
@@ -1005,9 +1026,11 @@ function showKategoriler(){
           <button class="btn btn-sm btn-danger" onclick="kategoriSil(${i})">Sil</button>
         </div>`).join('')}
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px">Ad değiştirirken var olan bir kategorinin adını yazarsanız iki kategori birleşir. Silinen kategorinin ürünleri seçtiğiniz kategoriye taşınır.</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-sm" onclick="kategoriAlfabetik()">A→Z sırala</button></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">▲ ▼ ile sırayı değiştirin; satış ekranındaki kategori sırası buna göre olur. Ad değiştirirken var olan bir kategorinin adını yazarsanız iki kategori birleşir. Silinen kategorinin ürünleri seçtiğiniz kategoriye taşınır.</div>
   `);
   window._katListe=kats;
+  const yeniListe=document.getElementById('kat-liste'); if(yeniListe) yeniListe.scrollTop=kaydirma;
 }
 async function kategoriEkle(){
   const ad=katNormal(document.getElementById('kat-yeni').value);
@@ -1035,7 +1058,9 @@ async function kategoriAdDegistir(i){
     delete ikonlar[eski];
     const liste=(MAGAZA_AYAR.kategoriler||[]).filter(k=>k!==eski);
     if(!n && !birlesme) liste.push(yeni);
-    await magazaAyarKaydet({kategoriler:liste, kategori_ikon:ikonlar});
+    let sira=[...(MAGAZA_AYAR.kategori_sira||[])];
+    if(birlesme) sira=sira.filter(k=>k!==eski); else sira=sira.map(k=>k===eski?yeni:k);
+    await magazaAyarKaydet({kategoriler:liste, kategori_ikon:ikonlar, kategori_sira:sira});
     if(activeCategory===eski) activeCategory=yeni;
     await refreshProducts();
     notify(birlesme?`✓ ${eski} → ${yeni} birleştirildi`:`✓ ${eski} → ${yeni}`);
@@ -1061,7 +1086,7 @@ async function kategoriSilOnay(kat,hedef){
   try{
     if(hedef) await kategoriTasi(kat,hedef);
     const ikonlar={...(MAGAZA_AYAR.kategori_ikon||{})}; delete ikonlar[kat];
-    await magazaAyarKaydet({kategoriler:(MAGAZA_AYAR.kategoriler||[]).filter(k=>k!==kat), kategori_ikon:ikonlar});
+    await magazaAyarKaydet({kategoriler:(MAGAZA_AYAR.kategoriler||[]).filter(k=>k!==kat), kategori_ikon:ikonlar, kategori_sira:(MAGAZA_AYAR.kategori_sira||[]).filter(k=>k!==kat)});
     if(activeCategory===kat) activeCategory='';
     await refreshProducts();
     notify(hedef?`✓ ${kat} silindi, ürünler ${hedef} kategorisine taşındı`:`✓ ${kat} silindi`);
