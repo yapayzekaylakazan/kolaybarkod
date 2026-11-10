@@ -42,36 +42,77 @@ async function cikisYap() {
   window.location.reload();
 }
 
+// Mağaza ayarları (terazi, yazıcı vb.) — kb_magazalar.ayarlar (jsonb)
+let MAGAZA_AYAR = {};
+let MAGAZA_ADI = '';
+
 async function magazaYukle() {
   const { data, error } = await sb
     .from('kb_magazalar')
-    .select('id, magaza_adi, plan, aktif')
+    .select('id, magaza_adi, plan, aktif, ayarlar')
+    .limit(1)
     .single();
   if (error || !data) throw new Error('Mağaza bulunamadı');
   MAGAZA_ID = data.id;
+  MAGAZA_ADI = data.magaza_adi || '';
+  MAGAZA_AYAR = data.ayarlar || {};
   localStorage.setItem('kb_magaza_id', MAGAZA_ID);
   return data;
+}
+
+async function magazaAyarKaydet(yeniAyarlar) {
+  const birlesik = { ...MAGAZA_AYAR, ...yeniAyarlar };
+  const { error } = await sb.from('kb_magazalar')
+    .update({ ayarlar: birlesik })
+    .eq('id', MAGAZA_ID);
+  if (error) throw error;
+  MAGAZA_AYAR = birlesik;
+  return birlesik;
 }
 
 // ============================================================
 // ÜRÜNLER
 // ============================================================
+// Supabase tek seferde en fazla 1000 satır döndürür — 1000'lik sayfalarla hepsini çek
 async function urunleriGetir(arama = '', kategori = '') {
-  let q = sb.from('kb_urunler')
-    .select('*')
-    .eq('magaza_id', MAGAZA_ID)
-    .eq('aktif', true)
-    .order('urun_adi');
-
-  if (arama) q = q.ilike('urun_adi', `%${arama}%`);
-  if (kategori) q = q.eq('kategori', kategori);
-
-  const { data, error } = await q;
-  if (error) throw error;
-  return data;
+  const SAYFA = 1000;
+  let tum = [];
+  for (let bas = 0; ; bas += SAYFA) {
+    let q = sb.from('kb_urunler')
+      .select('*')
+      .eq('magaza_id', MAGAZA_ID)
+      .eq('aktif', true)
+      .order('urun_adi')
+      .order('id')
+      .range(bas, bas + SAYFA - 1);
+    if (arama) q = q.ilike('urun_adi', `%${arama}%`);
+    if (kategori) q = q.eq('kategori', kategori);
+    const { data, error } = await q;
+    if (error) throw error;
+    tum = tum.concat(data);
+    if (data.length < SAYFA) break;
+  }
+  return tum;
 }
 
+// Yeni ürün. Aynı barkodlu silinmiş (pasif) bir ürün varsa onu yeni bilgilerle geri açar.
 async function urunEkle(urun) {
+  if (urun.barkod) {
+    const { data: mevcut } = await sb.from('kb_urunler')
+      .select('id, urun_adi, aktif')
+      .eq('magaza_id', MAGAZA_ID)
+      .eq('barkod', urun.barkod)
+      .maybeSingle();
+    if (mevcut) {
+      if (mevcut.aktif) throw new Error(`Bu barkod zaten "${mevcut.urun_adi}" ürününde kayıtlı`);
+      const { data, error } = await sb.from('kb_urunler')
+        .update({ ...urun, aktif: true, updated_at: new Date().toISOString() })
+        .eq('id', mevcut.id)
+        .select().single();
+      if (error) throw error;
+      return data;
+    }
+  }
   const { data, error } = await sb.from('kb_urunler').insert({
     magaza_id: MAGAZA_ID,
     ...urun
@@ -80,9 +121,21 @@ async function urunEkle(urun) {
   return data;
 }
 
+// Barkod başka bir aktif üründe kullanılıyor mu? (düzenlemede kontrol için)
+async function barkodBaskasindaMi(barkod, haricId) {
+  if (!barkod) return null;
+  const { data } = await sb.from('kb_urunler')
+    .select('id, urun_adi, aktif')
+    .eq('magaza_id', MAGAZA_ID)
+    .eq('barkod', barkod)
+    .maybeSingle();
+  if (data && data.id !== haricId) return data;
+  return null;
+}
+
 async function urunGuncelle(id, degerler) {
   const { data, error } = await sb.from('kb_urunler')
-    .update(degerler)
+    .update({ ...degerler, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('magaza_id', MAGAZA_ID)
     .select().single();
@@ -137,7 +190,7 @@ async function satisKaydet(sepet, odemeYontemi, nakit = 0, kart = 0) {
     birim: item.birim,
     birim_fiyat: item.birimFiyat,
     toplam: item.toplam,
-    kdv_orani: item.kdvOrani || 8
+    kdv_orani: item.kdvOrani ?? 20
   }));
 
   const { error: kalemErr } = await sb.from('kb_satis_kalemleri').insert(kalemler);
@@ -284,12 +337,41 @@ async function gunlukRaporGetir(tarih = null) {
   return data;
 }
 
+// Yerel saate göre (Türkiye) belirli bir andan bu yana satış adedi ve cirosu
+async function satisOzetiGetir(baslangic) {
+  let adet = 0, ciro = 0;
+  const SAYFA = 1000;
+  for (let bas = 0; ; bas += SAYFA) {
+    const { data, error } = await sb.from('kb_satislar')
+      .select('toplam_tutar')
+      .eq('magaza_id', MAGAZA_ID)
+      .eq('iptal', false)
+      .gte('created_at', baslangic.toISOString())
+      .range(bas, bas + SAYFA - 1);
+    if (error) break;
+    adet += data.length;
+    ciro += data.reduce((s, r) => s + Number(r.toplam_tutar || 0), 0);
+    if (data.length < SAYFA) break;
+  }
+  return { adet, ciro };
+}
+
+async function fireKayitlariGetir(limit = 50) {
+  const { data, error } = await sb.from('kb_fire_kayitlari')
+    .select('*')
+    .eq('magaza_id', MAGAZA_ID)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return data;
+}
+
 async function haftalikSatislariGetir() {
   const yediGunOnce = new Date();
   yediGunOnce.setDate(yediGunOnce.getDate() - 7);
 
   const { data, error } = await sb.from('kb_satislar')
-    .select('toplam_tutar, odeme_yontemi, created_at')
+    .select('toplam_tutar, odeme_yontemi, nakit_tutar, kart_tutar, created_at')
     .eq('magaza_id', MAGAZA_ID)
     .eq('iptal', false)
     .gte('created_at', yediGunOnce.toISOString())

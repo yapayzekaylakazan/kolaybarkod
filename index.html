@@ -178,7 +178,16 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 }
 .basket-item:hover{background:var(--bg3)}
 .bi-name{flex:1;font-size:13px;color:var(--text)}
-.bi-weight{font-size:11px;color:var(--text3);width:48px;text-align:center}
+.bi-weight{font-size:11px;color:var(--text3);min-width:64px;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}
+.qty-btn{width:20px;height:20px;border-radius:4px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;font-size:12px;line-height:1;padding:0}
+.qty-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pb-edit{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:12px;opacity:0;transition:opacity .15s}
+.prod-btn{position:relative}
+.prod-btn:hover .pb-edit{opacity:1}
+.pb-edit:hover{background:var(--bg3);color:var(--accent)}
+.inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none}
+.inp:focus{border-color:var(--accent)}
+.grid-more{grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;padding:12px}
 .bi-price{font-size:13px;font-weight:500;color:var(--text);width:56px;text-align:right}
 .bi-del{width:20px;height:20px;border-radius:4px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
 .bi-del:hover{background:rgba(255,77,109,0.15);color:var(--red)}
@@ -365,7 +374,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
     Hızlı Satış
   </div>
-  <div class="nav-item" onclick="showPage('scale')">
+  <div class="nav-item" id="nav-scale" onclick="showPage('scale')" style="display:none">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M6 8.5l6-5.5 6 5.5"/><ellipse cx="12" cy="21" rx="7" ry="1.5"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
     Tartılı Satış
   </div>
@@ -374,7 +383,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   <div class="nav-item" onclick="showPage('stock')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8l-2 4h12l-2-4z"/></svg>
     Stok
-    <span class="nav-badge" id="badge-kritik">3</span>
+    <span class="nav-badge" id="badge-kritik" style="display:none">0</span>
   </div>
   <div class="nav-item" onclick="showPage('barcode')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9V5h4M17 5h4v4M21 15v4h-4M7 19H3v-4M7 5v14M10 5v14M13 5v8M16 5v5M13 15v4M16 13v6"/></svg>
@@ -387,7 +396,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   <div class="nav-item" onclick="showPage('skt')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
     SKT Takip
-    <span class="nav-badge" id="badge-skt">2</span>
+    <span class="nav-badge" id="badge-skt" style="display:none">0</span>
   </div>
 
   <div class="nav-group">Finans</div>
@@ -401,9 +410,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   </div>
 
   <div class="sidebar-bottom">
-    <div class="user-pill">
-      <div class="user-avatar">M</div>
-      <div><div class="user-name">Mağaza Sahibi</div><div class="user-role">Admin</div></div>
+    <div class="user-pill" onclick="showSettings()" style="cursor:pointer" title="Mağaza ayarları">
+      <div class="user-avatar" id="user-avatar">M</div>
+      <div style="flex:1;min-width:0"><div class="user-name" id="user-name">Mağaza</div><div class="user-role">⚙ Ayarlar</div></div>
     </div>
   </div>
 </nav>
@@ -418,9 +427,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
       Hızlı Satış
     </div>
     <div class="topbar-right">
-      <div class="topbar-stat"><div class="ts-label">Bugün</div><div class="ts-val" id="today-total">1.240 ₺</div></div>
+      <div class="topbar-stat"><div class="ts-label">Bugün</div><div class="ts-val" id="today-total">—</div></div>
       <div style="width:1px;height:28px;background:var(--border)"></div>
-      <div class="topbar-stat"><div class="ts-label">Satış</div><div class="ts-val" id="today-count">18</div></div>
+      <div class="topbar-stat"><div class="ts-label">Satış</div><div class="ts-val" id="today-count">—</div></div>
       <div style="width:1px;height:28px;background:var(--border)"></div>
       <div style="font-size:12px;color:var(--text3)" id="clock"></div>
     </div>
@@ -431,7 +440,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
     <div id="pos-screen">
       <!-- SOL: Ürün seçimi -->
       <div id="pos-left">
-        <div class="scale-bar">
+        <div class="scale-bar" id="pos-scale-bar" style="display:none">
           <div class="scale-led"></div>
           <div>
             <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Terazi</div>
@@ -444,8 +453,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 
         <div class="barcode-bar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><path d="M3 9V5h4M17 5h4v4M21 15v4h-4M7 19H3v-4M7 5v14M10 5v14M13 5v8M16 5v5M13 15v4M16 13v6"/></svg>
-          <input id="barcode-input" placeholder="Barkod okut veya ürün adı yaz..." onkeydown="barcodeEnter(event)"/>
+          <input id="barcode-input" placeholder="Barkod okut veya ürün adı yaz..." onkeydown="barcodeEnter(event)" oninput="posAramaDegisti()" autocomplete="off"/>
           <button class="scan-btn" onclick="barcodeSearch()">TARA</button>
+          <button class="scan-btn" onclick="showAddProduct()" title="Yeni ürün ekle" style="background:var(--bg3);color:var(--text)">+ ÜRÜN</button>
         </div>
 
         <div class="cat-tabs" id="cat-tabs"></div>
@@ -530,6 +540,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
             <option value="kritik">Kritik</option>
             <option value="az">Az Stok</option>
             <option value="yeterli">Yeterli</option>
+            <option value="tukendi">Stoğu 0</option>
+            <option value="fiyatsiz">Fiyatı 0</option>
+            <option value="barkodsuz">Barkodsuz</option>
           </select>
         </div>
         <button class="btn btn-accent btn-sm" onclick="showAddProduct()">+ Ürün Ekle</button>
@@ -592,10 +605,10 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   <!-- FİRE / ÇÖP -->
   <div id="page-fire" class="hidden content mgmt-content">
     <div class="metrics-grid">
-      <div class="metric-card amber"><div class="m-label">Bu Ay Fire</div><div class="m-val" style="color:var(--amber)" id="fire-total-kg">—</div><div class="m-sub" style="color:var(--amber)">kg kayıp</div></div>
-      <div class="metric-card red"><div class="m-label">Bu Ay Çöp</div><div class="m-val" style="color:var(--red)" id="cop-total-kg">—</div></div>
+      <div class="metric-card amber"><div class="m-label">Bu Ay Fire (₺)</div><div class="m-val" style="color:var(--amber)" id="fire-total-kg">—</div><div class="m-sub" style="color:var(--amber)">bu ay</div></div>
+      <div class="metric-card red"><div class="m-label">Bu Ay Çöp (₺)</div><div class="m-val" style="color:var(--red)" id="cop-total-kg">—</div></div>
       <div class="metric-card red"><div class="m-label">Toplam Değer Kaybı</div><div class="m-val" style="color:var(--red)" id="fire-total-tl">—</div></div>
-      <div class="metric-card"><div class="m-label">Fire Oranı</div><div class="m-val" id="fire-oran">—</div></div>
+      <div class="metric-card"><div class="m-label">Bu Ay Kayıt</div><div class="m-val" id="fire-oran">—</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="card">
@@ -620,7 +633,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
           </div>
           <div class="form-field"><label>Ürün</label><select id="fire-product" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px"><option value="">— Seç —</option></select></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="form-field"><label>Miktar (kg)</label><input type="number" id="fire-kg" placeholder="0.000" step="0.001" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
+            <div class="form-field"><label>Miktar</label><input type="number" id="fire-kg" placeholder="1" step="any" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
             <div class="form-field"><label>Tarih</label><input type="date" id="fire-date" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
           </div>
           <div class="form-field"><label>Not</label><input id="fire-note" placeholder="Açıklama..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
@@ -663,10 +676,10 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   <!-- RAPORLAR -->
   <div id="page-report" class="hidden content mgmt-content">
     <div class="metrics-grid">
-      <div class="metric-card"><div class="m-label">Bugün</div><div class="m-val" id="rep-bugun">1.240 ₺</div><div class="m-sub">18 işlem</div></div>
-      <div class="metric-card"><div class="m-label">Bu Hafta</div><div class="m-val" id="rep-hafta">7.820 ₺</div><div class="m-sub">+8%</div></div>
-      <div class="metric-card"><div class="m-label">Bu Ay</div><div class="m-val" id="rep-ay">28.450 ₺</div></div>
-      <div class="metric-card"><div class="m-label">Ort. Sepet</div><div class="m-val" id="rep-ort">68 ₺</div></div>
+      <div class="metric-card"><div class="m-label">Bugün</div><div class="m-val" id="rep-bugun">—</div><div class="m-sub" id="rep-bugun-sub">—</div></div>
+      <div class="metric-card"><div class="m-label">Bu Hafta</div><div class="m-val" id="rep-hafta">—</div><div class="m-sub">son 7 gün</div></div>
+      <div class="metric-card"><div class="m-label">Bu Ay</div><div class="m-val" id="rep-ay">—</div></div>
+      <div class="metric-card"><div class="m-label">Ort. Sepet</div><div class="m-val" id="rep-ort">—</div></div>
     </div>
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
       <div class="card">
@@ -711,11 +724,40 @@ let PRODUCTS_CACHE = [];
 let CARI_CACHE = [];
 let FIRE_CACHE = []; // bu oturumda eklenen fire kayıtları (liste getiren bir Supabase fonksiyonu yok)
 
+// ── BİRİMLER ────────────────────────────────────────────────
+// sayilan: sepete tıklayınca 1 eklenir · ondalik: miktar sorulur · tartili: terazi açıksa teraziden okunur
+const BIRIMLER = [
+  {k:'adet',  ad:'Adet',  tip:'sayilan'},
+  {k:'dizi',  ad:'Dizi',  tip:'sayilan'},
+  {k:'demet', ad:'Demet', tip:'sayilan'},
+  {k:'paket', ad:'Paket', tip:'sayilan'},
+  {k:'kutu',  ad:'Kutu',  tip:'sayilan'},
+  {k:'koli',  ad:'Koli',  tip:'sayilan'},
+  {k:'çift',  ad:'Çift',  tip:'sayilan'},
+  {k:'takım', ad:'Takım', tip:'sayilan'},
+  {k:'saksı', ad:'Saksı', tip:'sayilan'},
+  {k:'kg',    ad:'Kilogram (kg)', tip:'tartili'},
+  {k:'gr',    ad:'Gram (g)',      tip:'tartili'},
+  {k:'lt',    ad:'Litre (lt)',    tip:'ondalik'},
+  {k:'ml',    ad:'Mililitre (ml)',tip:'ondalik'},
+  {k:'metre', ad:'Metre',         tip:'ondalik'},
+];
+function birimTipi(u){ const b=BIRIMLER.find(x=>x.k===u); return b?b.tip:'sayilan'; }
+function sayilanMi(u){ return birimTipi(u)==='sayilan'; }
+function tartiliMi(u){ return birimTipi(u)==='tartili'; }
+function teraziAktif(){ return !!(MAGAZA_AYAR && MAGAZA_AYAR.terazi); }
+function fmtSayi(n){ n=Number(n)||0; return Number.isInteger(n)?String(n):n.toLocaleString('tr-TR',{maximumFractionDigits:3}); }
+function fmtMiktar(n,u){ return fmtSayi(n)+' '+(u||'adet'); }
+function fmtTL(n){ return (Number(n)||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₺'; }
+function fmtFiyat(p){ return (Number(p.price)||0).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/'+p.unit; }
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
 function mapUrun(r){
   return {
-    id: r.id, barcode: r.barkod || '', name: r.urun_adi, category: r.kategori || 'Diğer',
-    unit: r.birim || 'kg', stock: Number(r.stok) || 0, minStock: Number(r.min_stok) || 1,
-    price: Number(r.fiyat) || 0, skt: r.skt || '', kdvOrani: r.kdv_orani || 8
+    id: r.id, barcode: r.barkod || '', name: r.urun_adi, category: r.kategori || 'GENEL',
+    unit: r.birim || 'adet', stock: Number(r.stok) || 0, minStock: r.min_stok==null ? 0 : Number(r.min_stok),
+    price: Number(r.fiyat) || 0, skt: r.skt || '', kdvOrani: r.kdv_orani==null ? 20 : Number(r.kdv_orani),
+    note: r.aciklama || ''
   };
 }
 function mapCari(r){
@@ -765,7 +807,7 @@ function showPage(name){
   // sayfa yükle
   if(name==='stock') refreshProducts().then(renderStock);
   if(name==='barcode') populateLabelProduct();
-  if(name==='fire') {renderFireRecords();populateFireProduct();updateFireMetrics();setTodayDate();}
+  if(name==='fire') {populateFireProduct();setTodayDate();fireYukle();}
   if(name==='skt') renderSkt('acil');
   if(name==='cari') refreshCari().then(()=>renderCari());
   if(name==='report') renderReport();
@@ -788,9 +830,12 @@ function renderBasket(){
   let total=0;
   el.innerHTML=basket.map((item,i)=>{
     total+=item.price;
+    const miktar = sayilanMi(item.unit)
+      ? `<button class="qty-btn" onclick="basketQty(${i},-1)">−</button><span>${fmtMiktar(item.qty,item.unit)}</span><button class="qty-btn" onclick="basketQty(${i},1)">+</button>`
+      : `<span>${fmtMiktar(item.qty,item.unit)}</span>`;
     return `<div class="basket-item">
-      <div class="bi-name">${item.name}</div>
-      <div class="bi-weight">${item.unit==='kg'?item.qty.toFixed(3)+' kg':item.qty+' adet'}</div>
+      <div class="bi-name">${esc(item.name)}</div>
+      <div class="bi-weight">${miktar}</div>
       <div class="bi-price">${item.price.toFixed(2)} ₺</div>
       <button class="bi-del" onclick="removeBasketItem(${i})">×</button>
     </div>`;
@@ -798,19 +843,30 @@ function renderBasket(){
   document.getElementById('basket-total').textContent=total.toFixed(2).replace('.',',')+' ₺';
 }
 
-function addToBasket(product, qty=null){
-  const products=getProducts();
-  const p=products.find(x=>x.id===product.id||x.name===product.name);
-  if(!p) return;
-  let amount=qty||1;
-  if(p.unit==='kg' && !qty){
-    const w=parseFloat(document.getElementById('scale-display').textContent)||0.25;
-    amount=w;
+// Sepete ekle — sayılan birimlerde aynı ürün tek satırda toplanır
+function sepeteEkle(p, qty){
+  qty=Number(qty)||1;
+  const mevcut = sayilanMi(p.unit) ? basket.find(b=>b.productId===p.id) : null;
+  if(mevcut){
+    mevcut.qty+=qty;
+    mevcut.price=parseFloat((mevcut.unitPrice*mevcut.qty).toFixed(2));
+  } else {
+    basket.push({name:p.name,unit:p.unit,qty,price:parseFloat((p.price*qty).toFixed(2)),productId:p.id,unitPrice:p.price});
   }
-  const price=parseFloat((p.price*amount).toFixed(2));
-  basket.push({name:p.name,unit:p.unit,qty:amount,price,productId:p.id,unitPrice:p.price});
   renderBasket();
-  notify(`${p.name} sepete eklendi`);
+  if(!p.price) notify(`⚠ ${p.name} — fiyatı 0 ₺, ürünü düzenleyip fiyat girin`);
+  else notify(`${p.name} — ${fmtMiktar(qty,p.unit)} eklendi`);
+}
+function addToBasket(product, qty=null){
+  const p=getProducts().find(x=>x.id===product.id);
+  if(p) sepeteEkle(p, qty||1);
+}
+function basketQty(i,delta){
+  const it=basket[i]; if(!it) return;
+  it.qty+=delta;
+  if(it.qty<=0){ basket.splice(i,1); }
+  else it.price=parseFloat((it.unitPrice*it.qty).toFixed(2));
+  renderBasket();
 }
 
 function removeBasketItem(i){ basket.splice(i,1); renderBasket(); }
@@ -819,24 +875,28 @@ function clearBasket(){ basket=[]; renderBasket(); }
 async function checkout(method){
   if(!basket.length){ notify('Sepet boş!'); return; }
   const total=basket.reduce((s,i)=>s+i.price,0);
+  let nakit=0, kart=0;
+  if(method==='karma'){
+    const g=prompt(`Toplam ${total.toFixed(2)} ₺\nKarttan çekilen tutarı girin (kalanı nakit):`,'');
+    if(g===null) return;
+    kart=Math.min(total, Math.max(0, parseFloat(String(g).replace(',','.'))||0));
+    nakit=parseFloat((total-kart).toFixed(2));
+  } else if(method==='kart') kart=total; else nakit=total;
   const sepetItems=basket.map(item=>{
     const p=PRODUCTS_CACHE.find(x=>x.id===item.productId);
     return {
-      urunId:item.productId, urunAdi:item.name, barkod:p?p.barcode:null,
+      urunId:item.productId, urunAdi:item.name, barkod:p&&p.barcode?p.barcode:null,
       miktar:item.qty, birim:item.unit, birimFiyat:item.unitPrice,
-      toplam:item.price, kdvOrani:p?p.kdvOrani:8
+      toplam:item.price, kdvOrani:p?p.kdvOrani:20
     };
   });
-  // Karma ödeme için ayrı nakit/kart giriş alanı bu ekranda yok — tutar 'nakit' tarafına yazılır.
-  let nakit=0, kart=0;
-  if(method==='kart') kart=total; else nakit=total;
   try{
     await satisKaydet(sepetItems, method, nakit, kart);
     notify(`✓ ${total.toFixed(2)} ₺ tahsil edildi — ${method}`);
     clearBasket();
     await refreshProducts();
     renderPosProducts(); renderStock();
-    updateBadges();
+    updateBadges(); gunlukOzetGuncelle();
   }catch(e){
     notify('Satış kaydedilemedi: '+e.message);
   }
@@ -845,39 +905,53 @@ async function checkout(method){
 // ============================================================
 // POS ÜRÜN GRİDİ
 // ============================================================
-const CATEGORY_ICONS = {Baharat:'🌿',Meyve:'🍎',Sebze:'🥕',Diğer:'📦'};
+const CATEGORY_ICONS = {
+  'KOZMETİK':'💄','PARTİ MALZEMESİ':'🎉','BİJUTERİ':'💍','HEDİYELİK EŞYA':'🎁','OYUNCAK':'🧸',
+  'SAKSI ÇİÇEK':'🪴','KESME ÇİÇEK':'💐','YAPAY ÇİÇEK':'🌸','GÜMÜŞ':'💎','SAAT':'⌚','TERARYUM':'🌵',
+  'HEDİYELİK KUTU':'📦','AMBALAJ':'🎀','ORGANİZASYON':'🎊','SÜNNET SÜSLEME':'👑','ARAÇ VS.SÜSLEME':'🚗',
+  Baharat:'🌿',Meyve:'🍎',Sebze:'🥕','KURUYEMİŞ':'🥜'
+};
 let activeCategory='';
+const GRID_LIMIT=300;
+
+function posAramaDegisti(){ renderPosProducts(); }
 
 function renderPosProducts(){
   const products=getProducts();
-  const cats=[...new Set(products.map(p=>p.category))];
-  // tabs
+  const cats=[...new Set(products.map(p=>p.category))].sort((a,b)=>a.localeCompare(b,'tr'));
   const tabsEl=document.getElementById('cat-tabs');
-  tabsEl.innerHTML=`<div class="cat-tab ${!activeCategory?'active':''}" onclick="filterPosCategory('')">Tümü</div>`+
-    cats.map(c=>`<div class="cat-tab ${activeCategory===c?'active':''}" onclick="filterPosCategory('${c}')">${CATEGORY_ICONS[c]||'•'} ${c}</div>`).join('');
-  // grid
-  const filtered=activeCategory?products.filter(p=>p.category===activeCategory):products;
-  document.getElementById('products-grid').innerHTML=filtered.map(p=>`
+  tabsEl.innerHTML=`<div class="cat-tab ${!activeCategory?'active':''}" onclick="filterPosCategory('')">Tümü (${products.length})</div>`+
+    cats.map(c=>`<div class="cat-tab ${activeCategory===c?'active':''}" onclick="filterPosCategory('${esc(c)}')">${CATEGORY_ICONS[c]||'•'} ${esc(c)}</div>`).join('');
+  const q=((document.getElementById('barcode-input')||{}).value||'').trim().toLocaleLowerCase('tr');
+  let filtered=activeCategory?products.filter(p=>p.category===activeCategory):products;
+  if(q) filtered=filtered.filter(p=>p.name.toLocaleLowerCase('tr').includes(q)||p.barcode.includes(q));
+  const gosterilen=filtered.slice(0,GRID_LIMIT);
+  document.getElementById('products-grid').innerHTML=gosterilen.map(p=>`
     <div class="prod-btn" onclick="quickAdd('${p.id}')">
+      <button class="pb-edit" title="Düzenle" onclick="event.stopPropagation();editProduct('${p.id}')">✎</button>
       <div class="pb-icon">${CATEGORY_ICONS[p.category]||'📦'}</div>
-      <div class="pb-name">${p.name}</div>
-      <div class="pb-price">${p.price} ₺/kg</div>
-      <div class="pb-stock">${p.stock.toFixed(2)} kg stok</div>
-    </div>`).join('');
+      <div class="pb-name">${esc(p.name)}</div>
+      <div class="pb-price">${fmtFiyat(p)}</div>
+      <div class="pb-stock">${fmtMiktar(p.stock,p.unit)} stok</div>
+    </div>`).join('')
+    + (filtered.length>GRID_LIMIT?`<div class="grid-more">${filtered.length} üründen ${GRID_LIMIT} tanesi gösteriliyor — aramaya ürün adı veya barkod yazın</div>`:'')
+    + (!filtered.length?`<div class="grid-more">Ürün bulunamadı</div>`:'');
 }
 
 function filterPosCategory(cat){ activeCategory=cat; renderPosProducts(); }
 
+// Ürüne tıklayınca: sayılan birim → direkt 1 ekle; kg/lt vb. → miktar sor (terazi açıksa teraziden doldur)
 function quickAdd(id){
-  const products=getProducts();
-  const p=products.find(x=>x.id===id);
+  const p=getProducts().find(x=>x.id===id);
   if(!p) return;
-  // Tartılı ürün — gramaj sor
-  openModal('Gramaj Gir — '+p.name,`
+  if(sayilanMi(p.unit)){ sepeteEkle(p,1); return; }
+  const teraziden = tartiliMi(p.unit) && teraziAktif() && teraziGercek && scaleWeight>0;
+  const baslangic = teraziden ? (p.unit==='gr' ? Math.round(scaleWeight*1000) : scaleWeight) : '';
+  openModal('Miktar Gir — '+p.name,`
     <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:13px;color:var(--text3);margin-bottom:6px">Terazi ağırlığı veya gireceğiniz miktar</div>
-      <input type="number" id="qty-input" step="0.001" placeholder="0.250" style="font-size:24px;width:120px;text-align:center;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px;color:var(--text);font-family:var(--font-display);outline:none"/>
-      <div style="font-size:12px;color:var(--text3);margin-top:6px">kg — Fiyat: ${p.price} ₺/kg</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:6px">${teraziden?'Teraziden okunan miktar (değiştirebilirsiniz)':'Satılacak miktarı girin'}</div>
+      <input type="number" id="qty-input" step="any" value="${baslangic}" placeholder="${p.unit==='kg'?'0,250':'1'}" style="font-size:24px;width:140px;text-align:center;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px;color:var(--text);font-family:var(--font-display);outline:none"/>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">${esc(p.unit)} — Fiyat: ${fmtFiyat(p)}</div>
     </div>
     <div id="price-preview" style="text-align:center;font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--accent);margin-bottom:16px">0,00 ₺</div>
     <div style="display:flex;gap:8px">
@@ -887,59 +961,50 @@ function quickAdd(id){
   `);
   setTimeout(()=>{
     const inp=document.getElementById('qty-input');
-    if(inp){
-      inp.focus();
-      inp.oninput=()=>{
-        const v=parseFloat(inp.value)||0;
-        document.getElementById('price-preview').textContent=(v*p.price).toFixed(2).replace('.',',')+' ₺';
-      };
-    }
+    if(!inp) return;
+    const hesapla=()=>{ const v=parseFloat(inp.value)||0; document.getElementById('price-preview').textContent=(v*p.price).toFixed(2).replace('.',',')+' ₺'; };
+    inp.oninput=hesapla; hesapla(); inp.focus(); inp.select();
+    inp.onkeydown=e=>{ if(e.key==='Enter') confirmQuickAdd(p.id); };
   },50);
 }
 
 function confirmQuickAdd(id){
   const qty=parseFloat(document.getElementById('qty-input').value);
   if(!qty||qty<=0){ notify('Geçerli miktar girin'); return; }
-  const products=getProducts();
-  const p=products.find(x=>x.id===id);
-  basket.push({name:p.name,unit:p.unit,qty,price:parseFloat((p.price*qty).toFixed(2)),productId:p.id,unitPrice:p.price});
-  renderBasket();
+  const p=getProducts().find(x=>x.id===id);
   closeModal();
-  notify(`${p.name} eklendi — ${(p.price*qty).toFixed(2)} ₺`);
+  sepeteEkle(p,qty);
 }
 
 function barcodeEnter(e){ if(e.key==='Enter') barcodeSearch(); }
 async function barcodeSearch(){
-  const val=document.getElementById('barcode-input').value.trim();
+  const inp=document.getElementById('barcode-input');
+  const val=inp.value.trim();
   if(!val) return;
-  const row=await barkoduBul(val);
-  if(row){
-    if(!PRODUCTS_CACHE.find(p=>p.id===row.id)) PRODUCTS_CACHE.push(mapUrun(row));
-    quickAdd(row.id);
-    document.getElementById('barcode-input').value='';
-    return;
+  // Önce yerel önbellekte barkod eşleşmesi
+  let p=getProducts().find(x=>x.barcode && x.barcode===val);
+  if(!p){
+    const row=await barkoduBul(val);
+    if(row){ p=mapUrun(row); if(!PRODUCTS_CACHE.find(x=>x.id===p.id)) PRODUCTS_CACHE.push(p); }
   }
-  const products=getProducts();
-  const p=products.find(x=>x.name.toLowerCase().includes(val.toLowerCase()));
-  if(p){ quickAdd(p.id); document.getElementById('barcode-input').value=''; }
-  else notify('Ürün bulunamadı: '+val);
+  if(p){ inp.value=''; renderPosProducts(); quickAdd(p.id); return; }
+  // İsimle tek eşleşme varsa onu ekle
+  const q=val.toLocaleLowerCase('tr');
+  const isimle=getProducts().filter(x=>x.name.toLocaleLowerCase('tr').includes(q));
+  if(isimle.length===1){ inp.value=''; renderPosProducts(); quickAdd(isimle[0].id); return; }
+  if(isimle.length>1){ notify(`${isimle.length} ürün bulundu — listeden seçin`); return; }
+  // Hiç yoksa: barkoda benziyorsa yeni ürün olarak ekle
+  if(/^[0-9]{4,}$/.test(val)){
+    if(confirm(`"${val}" barkodlu ürün kayıtlı değil.\nBu barkodla yeni ürün eklemek ister misiniz?`)){
+      inp.value=''; renderPosProducts(); showAddProduct({barcode:val});
+    }
+  } else notify('Ürün bulunamadı: '+val);
 }
 
 // ============================================================
-// TERACİ SİMÜLASYONU (gerçek: Web Serial API)
+// TERAZİ (sadece mağaza ayarlarında "Terazi var" açıksa)
 // ============================================================
-let scaleWeight=0, scaleInterval=null;
-function startScaleSimulation(){
-  scaleInterval=setInterval(()=>{
-    scaleWeight=+(Math.random()*0.8+0.05).toFixed(3);
-    document.getElementById('scale-display').textContent=scaleWeight.toFixed(3)+' kg';
-    const bigEl=document.getElementById('scale-big');
-    if(bigEl) bigEl.textContent=scaleWeight.toFixed(3);
-    updateScaleCalc();
-  },1800);
-}
-startScaleSimulation();
-
+let scaleWeight=0;
 let selectedScaleProduct=null;
 function updateScaleCalc(){
   if(!selectedScaleProduct) return;
@@ -947,34 +1012,26 @@ function updateScaleCalc(){
   const el=document.getElementById('scale-calc-price');
   if(el) el.textContent=price.replace('.',',')+' ₺';
   const det=document.getElementById('scale-calc-detail');
-  if(det) det.textContent=`${scaleWeight.toFixed(3)} kg × ${selectedScaleProduct.price} ₺/kg`;
+  if(det) det.textContent=`${scaleWeight.toFixed(3)} kg × ${fmtFiyat(selectedScaleProduct)}`;
 }
-function resetScale(){ scaleWeight=0; }
 function addScaleToBasket(){
   if(!selectedScaleProduct){ notify('Ürün seçin'); return; }
-  basket.push({name:selectedScaleProduct.name,unit:'kg',qty:scaleWeight,price:parseFloat((selectedScaleProduct.price*scaleWeight).toFixed(2)),productId:selectedScaleProduct.id,unitPrice:selectedScaleProduct.price});
-  renderBasket();
-  notify(selectedScaleProduct.name+' sepete eklendi');
+  if(!(scaleWeight>0)){ notify('Terazide ağırlık yok'); return; }
+  const qty = selectedScaleProduct.unit==='gr' ? Math.round(scaleWeight*1000) : scaleWeight;
+  sepeteEkle(selectedScaleProduct, qty);
 }
-
-function renderScaleProducts(){
-  const products=getProducts();
-  const el=document.getElementById('scale-product-list');
-  el.innerHTML=products.map(p=>`
+function tartiliUrunler(){ return getProducts().filter(p=>tartiliMi(p.unit)); }
+function scaleListHTML(list){
+  return list.map(p=>`
     <div onclick="selectScaleProduct('${p.id}')" style="padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border:1px solid ${selectedScaleProduct&&selectedScaleProduct.id===p.id?'var(--accent)':'var(--border)'};background:${selectedScaleProduct&&selectedScaleProduct.id===p.id?'rgba(0,214,143,0.05)':'transparent'};margin-bottom:3px">
-      <span style="font-size:13px;color:var(--text)">${p.name}</span>
-      <span style="font-size:12px;color:var(--accent)">${p.price} ₺/kg</span>
-    </div>`).join('');
+      <span style="font-size:13px;color:var(--text)">${esc(p.name)}</span>
+      <span style="font-size:12px;color:var(--accent)">${fmtFiyat(p)}</span>
+    </div>`).join('') || '<div style="color:var(--text3);font-size:12px;padding:10px">Birimi kg veya gram olan ürün yok</div>';
 }
+function renderScaleProducts(){ document.getElementById('scale-product-list').innerHTML=scaleListHTML(tartiliUrunler()); }
 function filterScaleProducts(){
-  const q=document.getElementById('scale-search').value.toLowerCase();
-  const products=getProducts().filter(p=>p.name.toLowerCase().includes(q));
-  const el=document.getElementById('scale-product-list');
-  el.innerHTML=products.map(p=>`
-    <div onclick="selectScaleProduct('${p.id}')" style="padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);margin-bottom:3px">
-      <span style="font-size:13px;color:var(--text)">${p.name}</span>
-      <span style="font-size:12px;color:var(--accent)">${p.price} ₺/kg</span>
-    </div>`).join('');
+  const q=document.getElementById('scale-search').value.toLocaleLowerCase('tr');
+  document.getElementById('scale-product-list').innerHTML=scaleListHTML(tartiliUrunler().filter(p=>p.name.toLocaleLowerCase('tr').includes(q)));
 }
 function selectScaleProduct(id){
   const p=getProducts().find(x=>x.id===id);
@@ -988,137 +1045,152 @@ function selectScaleProduct(id){
 // ============================================================
 // STOK
 // ============================================================
+const STOK_LIMIT=500;
 function getStockStatus(p){
   if(p.stock<=0) return {label:'Tükendi',class:'badge-red'};
-  if(p.stock<p.minStock) return {label:'Kritik',class:'badge-red'};
-  if(p.stock<p.minStock*2) return {label:'Az',class:'badge-amber'};
+  if(p.minStock>0 && p.stock<p.minStock) return {label:'Kritik',class:'badge-red'};
+  if(p.minStock>0 && p.stock<p.minStock*2) return {label:'Az',class:'badge-amber'};
   return {label:'Yeterli',class:'badge-green'};
 }
+function kritikMi(p){ return p.minStock>0 && p.stock<p.minStock; }
+function azMi(p){ return p.minStock>0 && p.stock>=p.minStock && p.stock<p.minStock*2; }
 function renderStock(){
+  const tbody=document.getElementById('stock-tbody');
+  if(!tbody) return;
   const products=getProducts();
-  const q=(document.getElementById('stock-search').value||'').toLowerCase();
+  const q=(document.getElementById('stock-search').value||'').toLocaleLowerCase('tr');
   const f=document.getElementById('stock-filter').value;
   let filtered=products;
-  if(q) filtered=filtered.filter(p=>p.name.toLowerCase().includes(q)||p.barcode.includes(q));
-  if(f==='kritik') filtered=filtered.filter(p=>p.stock<p.minStock);
-  if(f==='az') filtered=filtered.filter(p=>p.stock>=p.minStock&&p.stock<p.minStock*2);
-  if(f==='yeterli') filtered=filtered.filter(p=>p.stock>=p.minStock*2);
-  document.getElementById('stock-tbody').innerHTML=filtered.map(p=>{
+  if(q) filtered=filtered.filter(p=>p.name.toLocaleLowerCase('tr').includes(q)||p.barcode.includes(q)||p.category.toLocaleLowerCase('tr').includes(q));
+  if(f==='kritik') filtered=filtered.filter(kritikMi);
+  if(f==='az') filtered=filtered.filter(azMi);
+  if(f==='yeterli') filtered=filtered.filter(p=>!kritikMi(p)&&!azMi(p)&&p.stock>0);
+  if(f==='tukendi') filtered=filtered.filter(p=>p.stock<=0);
+  if(f==='fiyatsiz') filtered=filtered.filter(p=>!p.price);
+  if(f==='barkodsuz') filtered=filtered.filter(p=>!p.barcode);
+  tbody.innerHTML=filtered.slice(0,STOK_LIMIT).map(p=>{
     const s=getStockStatus(p);
-    const pct=Math.min(100,Math.round(p.stock/Math.max(p.minStock*3,0.1)*100));
+    const pct=p.minStock>0?Math.min(100,Math.round(p.stock/(p.minStock*3)*100)):(p.stock>0?100:0);
     return `<tr>
-      <td>${p.name}</td>
-      <td style="font-family:monospace;font-size:11px;color:var(--text3)">${p.barcode}</td>
-      <td>${p.category}</td>
-      <td>${p.unit}</td>
+      <td>${esc(p.name)}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text3)">${esc(p.barcode)}</td>
+      <td>${esc(p.category)}</td>
+      <td>${esc(p.unit)}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px">
-          <span>${p.stock.toFixed(2)}</span>
+          <span>${fmtSayi(p.stock)}</span>
           <div class="pbar"><div class="pbar-fill" style="width:${pct}%;background:${pct<30?'var(--red)':pct<60?'var(--amber)':'var(--accent)'}"></div></div>
         </div>
       </td>
-      <td>${p.minStock}</td>
+      <td>${fmtSayi(p.minStock)}</td>
       <td><span class="badge ${s.class}">${s.label}</span></td>
-      <td>${p.price} ₺/kg</td>
+      <td>${fmtFiyat(p)}</td>
       <td><button class="btn btn-sm" onclick="editProduct('${p.id}')">Düzenle</button></td>
     </tr>`;
-  }).join('');
-  // metrics
-  document.getElementById('st-total').textContent=products.length;
-  document.getElementById('st-kritik').textContent=products.filter(p=>p.stock<p.minStock).length;
-  document.getElementById('st-az').textContent=products.filter(p=>p.stock>=p.minStock&&p.stock<p.minStock*2).length;
+  }).join('') + (filtered.length>STOK_LIMIT?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:14px">${filtered.length} üründen ${STOK_LIMIT} tanesi gösteriliyor — aramayı daraltın</td></tr>`:'');
+  document.getElementById('st-total').textContent=products.length.toLocaleString('tr-TR');
+  document.getElementById('st-kritik').textContent=products.filter(kritikMi).length.toLocaleString('tr-TR');
+  document.getElementById('st-az').textContent=products.filter(azMi).length.toLocaleString('tr-TR');
   document.getElementById('st-cat').textContent=[...new Set(products.map(p=>p.category))].length;
 }
-async function updateBadges(){
-  const kritik=await kritikStoklariGetir();
-  document.getElementById('badge-kritik').textContent=kritik.length;
+function updateBadges(){
+  const n=getProducts().filter(kritikMi).length;
+  const el=document.getElementById('badge-kritik');
+  if(el){ el.textContent=n; el.style.display=n?'':'none'; }
 }
 
-function showAddProduct(){
-  openModal('Yeni Ürün Ekle',`
+// ── ÜRÜN EKLE / DÜZENLE (tek form) ───────────────────────────
+function urunFormHTML(p){
+  const kategoriler=[...new Set(getProducts().map(x=>x.category))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const birimSecili=p.unit||'adet';
+  const kdv=p.kdvOrani==null?20:p.kdvOrani;
+  return `
     <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="form-field"><label>Ürün Adı</label><input id="np-name" placeholder="Kuru Nane" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
+      <div class="form-field"><label>Ürün Adı *</label><input id="pf-name" class="inp" value="${esc(p.name||'')}" placeholder="Örn. Canlı Tek Gül"/></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-field"><label>Barkod</label><input id="np-barcode" placeholder="8690001..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
-        <div class="form-field"><label>Kategori</label><select id="np-cat" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px"><option>Baharat</option><option>Meyve</option><option>Sebze</option><option>Diğer</option></select></div>
+        <div class="form-field"><label>Barkod</label><input id="pf-barcode" class="inp" value="${esc(p.barcode||'')}" placeholder="Okutun veya boş bırakın"/></div>
+        <div class="form-field"><label>Kategori</label><input id="pf-cat" class="inp" list="pf-cat-list" value="${esc(p.category||'')}" placeholder="Seçin veya yeni yazın"/>
+          <datalist id="pf-cat-list">${kategoriler.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-        <div class="form-field"><label>Fiyat (₺/kg)</label><input type="number" id="np-price" placeholder="85" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
-        <div class="form-field"><label>Başlangıç Stok</label><input type="number" id="np-stock" placeholder="5" step="0.001" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
-        <div class="form-field"><label>Min. Stok</label><input type="number" id="np-min" placeholder="1" step="0.1" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
+        <div class="form-field"><label>Birim</label><select id="pf-unit" class="inp">${BIRIMLER.map(b=>`<option value="${b.k}" ${b.k===birimSecili?'selected':''}>${b.ad}</option>`).join('')}</select></div>
+        <div class="form-field"><label>Satış Fiyatı (₺)</label><input type="number" id="pf-price" class="inp" step="any" value="${p.price??''}" placeholder="0"/></div>
+        <div class="form-field"><label>KDV %</label><select id="pf-kdv" class="inp">${[0,1,10,20].map(k=>`<option value="${k}" ${Number(kdv)===k?'selected':''}>%${k}</option>`).join('')}</select></div>
       </div>
-      <div class="form-field"><label>SKT</label><input type="month" id="np-skt" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="form-field"><label>Stok</label><input type="number" id="pf-stock" class="inp" step="any" value="${p.stock??''}" placeholder="0"/></div>
+        <div class="form-field"><label>Min. Stok</label><input type="number" id="pf-min" class="inp" step="any" value="${p.minStock??''}" placeholder="0"/></div>
+        <div class="form-field"><label>SKT</label><input type="month" id="pf-skt" class="inp" value="${esc(p.skt||'')}"/></div>
+      </div>
+      <div class="form-field"><label>Açıklama / Not</label><input id="pf-note" class="inp" value="${esc(p.note||'')}" placeholder="Tedarikçi, alış fiyatı vb."/></div>
+      <div style="font-size:11px;color:var(--text3)">Min. stok 0 ise bu ürün için düşük stok uyarısı verilmez.</div>
       <div style="display:flex;gap:8px;margin-top:6px">
-        <button class="btn" onclick="closeModal()" style="flex:1">İptal</button>
-        <button class="btn btn-accent" onclick="saveNewProduct()" style="flex:1">Kaydet</button>
+        ${p.id?`<button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">Sil</button>`:''}
+        <div style="flex:1"></div>
+        <button class="btn" onclick="closeModal()">İptal</button>
+        <button class="btn btn-accent" onclick="${p.id?`saveEditProduct('${p.id}')`:'saveNewProduct()'}">Kaydet</button>
       </div>
-    </div>
-  `);
+    </div>`;
+}
+function urunFormOku(){
+  const num=id=>{ const v=document.getElementById(id).value; return v===''?null:parseFloat(String(v).replace(',','.')); };
+  return {
+    urun_adi: document.getElementById('pf-name').value.trim(),
+    barkod: document.getElementById('pf-barcode').value.trim()||null,
+    kategori: document.getElementById('pf-cat').value.trim().toLocaleUpperCase('tr')||'GENEL',
+    birim: document.getElementById('pf-unit').value,
+    fiyat: num('pf-price')??0,
+    kdv_orani: Number(document.getElementById('pf-kdv').value),
+    stok: num('pf-stock'),
+    min_stok: num('pf-min')??0,
+    skt: document.getElementById('pf-skt').value||null,
+    aciklama: document.getElementById('pf-note').value.trim()||null
+  };
+}
+function showAddProduct(on={}){
+  openModal('Yeni Ürün Ekle', urunFormHTML({unit:'adet',kdvOrani:20,minStock:0,category:activeCategory||'',...on}));
+  setTimeout(()=>{ const el=document.getElementById(on.barcode?'pf-name':'pf-name'); if(el) el.focus(); },50);
 }
 async function saveNewProduct(){
-  const name=document.getElementById('np-name').value.trim();
-  if(!name){ notify('Ürün adı gerekli'); return; }
-  const veri={
-    barkod:document.getElementById('np-barcode').value.trim()||null,
-    urun_adi:name,
-    kategori:document.getElementById('np-cat').value,
-    birim:'kg',
-    stok:parseFloat(document.getElementById('np-stock').value)||0,
-    min_stok:parseFloat(document.getElementById('np-min').value)||1,
-    fiyat:parseFloat(document.getElementById('np-price').value)||0,
-    skt:document.getElementById('np-skt').value||null
-  };
+  const v=urunFormOku();
+  if(!v.urun_adi){ notify('Ürün adı gerekli'); return; }
+  v.stok=v.stok??0;
   try{
-    await urunEkle(veri);
+    await urunEkle(v);
     await refreshProducts();
     closeModal(); renderStock(); renderPosProducts(); updateBadges();
-    notify('✓ '+name+' eklendi');
+    notify('✓ '+v.urun_adi+' eklendi');
   }catch(e){ notify('Kaydedilemedi: '+e.message); }
 }
 function editProduct(id){
-  const products=getProducts();
-  const p=products.find(x=>x.id===id);
+  const p=getProducts().find(x=>x.id===id);
   if(!p) return;
-  openModal('Ürün Düzenle — '+p.name,`
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-field"><label>Fiyat (₺/kg)</label><input type="number" id="ep-price" value="${p.price}" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
-        <div class="form-field"><label>Stok (kg)</label><input type="number" id="ep-stock" value="${p.stock}" step="0.001" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-field"><label>Min. Stok</label><input type="number" id="ep-min" value="${p.minStock}" step="0.1" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
-        <div class="form-field"><label>SKT</label><input type="month" id="ep-skt" value="${p.skt||''}" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"/></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <button class="btn btn-danger btn-sm" onclick="deleteProduct('${id}')">Sil</button>
-        <div style="flex:1"></div>
-        <button class="btn" onclick="closeModal()">İptal</button>
-        <button class="btn btn-accent" onclick="saveEditProduct('${id}')">Kaydet</button>
-      </div>
-    </div>
-  `);
+  openModal('Ürün Düzenle', urunFormHTML(p));
 }
 async function saveEditProduct(id){
   const p=PRODUCTS_CACHE.find(x=>x.id===id);
-  const yeniFiyat=parseFloat(document.getElementById('ep-price').value)||(p?p.price:0);
-  const yeniStok=parseFloat(document.getElementById('ep-stock').value);
-  const yeniMin=parseFloat(document.getElementById('ep-min').value)||(p?p.minStock:1);
-  const yeniSkt=document.getElementById('ep-skt').value||(p?p.skt:null)||null;
+  const v=urunFormOku();
+  if(!v.urun_adi){ notify('Ürün adı gerekli'); return; }
+  const yeniStok=v.stok; delete v.stok;
   try{
-    await urunGuncelle(id,{fiyat:yeniFiyat,min_stok:yeniMin,skt:yeniSkt});
-    if(p && !isNaN(yeniStok) && yeniStok!==p.stock){
+    if(v.barkod && v.barkod!==(p?p.barcode:'')){
+      const cakisan=await barkodBaskasindaMi(v.barkod,id);
+      if(cakisan){ notify(`Bu barkod "${cakisan.urun_adi}" ürününde kayıtlı${cakisan.aktif?'':' (silinmiş)'}`); return; }
+    }
+    await urunGuncelle(id,v);
+    if(p && yeniStok!=null && !isNaN(yeniStok) && yeniStok!==p.stock){
       await stokGirisi(id, yeniStok-p.stock, 'Ürün düzenleme ekranından güncellendi');
     }
     await refreshProducts();
-    closeModal(); renderStock(); updateBadges(); notify('✓ Güncellendi');
+    closeModal(); renderStock(); renderPosProducts(); updateBadges(); notify('✓ Güncellendi');
   }catch(e){ notify('Güncellenemedi: '+e.message); }
 }
 async function deleteProduct(id){
-  if(!confirm('Silmek istediğinize emin misiniz?')) return;
+  if(!confirm('Silmek istediğinize emin misiniz?\n(Satış geçmişi korunur; aynı barkodla tekrar eklerseniz ürün geri açılır.)')) return;
   try{
     await urunSil(id);
     await refreshProducts();
-    closeModal(); renderStock(); updateBadges();
+    closeModal(); renderStock(); renderPosProducts(); updateBadges();
     notify('Ürün silindi');
   }catch(e){ notify('Silinemedi: '+e.message); }
 }
@@ -1129,7 +1201,7 @@ async function deleteProduct(id){
 function populateLabelProduct(){
   const products=getProducts();
   const sel=document.getElementById('lbl-product');
-  sel.innerHTML='<option value="">— Seç —</option>'+products.map(p=>`<option value="${p.id}">${p.name} — ${p.price}₺/kg</option>`).join('');
+  sel.innerHTML='<option value="">— Seç —</option>'+products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmtFiyat(p)}</option>`).join('');
 }
 function updateLabelPreview(){
   const id=document.getElementById('lbl-product').value;
@@ -1139,11 +1211,11 @@ function updateLabelPreview(){
   if(!p){ box.innerHTML='<div style="font-size:13px;color:#9ca3af">Ürün seçin</div>'; return; }
   const wg=parseFloat(document.getElementById('lbl-weight').value)||0;
   const customPrice=parseFloat(document.getElementById('lbl-price').value);
-  const price=customPrice||(wg?p.price*wg:p.price);
+  const price=customPrice||(wg&&p.unit==='kg'?p.price*wg/1000:p.price);
   const skt=document.getElementById('lbl-skt').value;
   box.innerHTML=`
-    <div class="lp-name">${p.name.toUpperCase()}</div>
-    <div class="lp-detail">${wg?wg*1000+'g — ':''} ${p.price} ₺/kg</div>
+    <div class="lp-name">${esc(p.name.toLocaleUpperCase('tr'))}</div>
+    <div class="lp-detail">${wg?wg+'g — ':''} ${fmtFiyat(p)}</div>
     <div class="lp-price">${price.toFixed(2)} ₺</div>
     <div class="lp-barcode">${p.barcode}</div>
     <div class="lp-bars">▌▌▌ ▌▌▌▌ ▌▌▌</div>
@@ -1175,7 +1247,7 @@ function selectFireType(t){
 function populateFireProduct(){
   const products=getProducts();
   const sel=document.getElementById('fire-product');
-  sel.innerHTML='<option value="">— Seç —</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  sel.innerHTML='<option value="">— Seç —</option>'+products.map(p=>`<option value="${p.id}">${esc(p.name)} (${esc(p.unit)})</option>`).join('');
 }
 async function addFireRecord(){
   const sel=document.getElementById('fire-product');
@@ -1194,8 +1266,13 @@ async function addFireRecord(){
     renderFireRecords(); updateFireMetrics(); updateBadges(); renderStock();
     document.getElementById('fire-kg').value='';
     document.getElementById('fire-note').value='';
-    notify(`✓ Fire kaydı eklendi — ${kg} kg ${urunAdi}`);
+    notify(`✓ Kayıt eklendi — ${urunAdi}: ${fmtSayi(kg)}`);
   }catch(e){ notify('Kaydedilemedi: '+e.message); }
+}
+async function fireYukle(){
+  const rows=await fireKayitlariGetir(100);
+  FIRE_CACHE=rows.map(k=>({id:k.id,type:k.kayip_tipi,product:k.urun_adi,kg:Number(k.miktar_kg),date:(k.created_at||'').slice(0,10),note:k.notlar||'',tl:Number(k.tahmini_deger)||0}));
+  renderFireRecords(); updateFireMetrics();
 }
 function renderFireRecords(){
   const records=getFireRecords();
@@ -1209,8 +1286,8 @@ function renderFireRecords(){
         <div style="font-size:11px;color:var(--text3)">${r.date}${r.note?' — '+r.note:''}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:13px;color:var(--${r.type==='fire'?'amber':'red'});font-weight:500">${r.kg} kg</div>
-        <div style="font-size:11px;color:var(--text3)">${r.tl} ₺</div>
+        <div style="font-size:13px;color:var(--${r.type==='fire'?'amber':'red'});font-weight:500">${fmtSayi(r.kg)}</div>
+        <div style="font-size:11px;color:var(--text3)">${fmtTL(r.tl)}</div>
       </div>
     </div>`).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Kayıt yok</div>';
 }
@@ -1223,10 +1300,10 @@ function updateFireMetrics(){
   const totalKg=records.reduce((s,r)=>s+r.kg,0);
   const products=getProducts();
   const totalSold=products.reduce((s,p)=>s+(p.stock||0),0);
-  document.getElementById('fire-total-kg').textContent=fires.reduce((s,r)=>s+r.kg,0).toFixed(2)+' kg';
-  document.getElementById('cop-total-kg').textContent=cops.reduce((s,r)=>s+r.kg,0).toFixed(2)+' kg';
+  document.getElementById('fire-total-kg').textContent=fmtTL(fires.reduce((s,r)=>s+r.tl,0));
+  document.getElementById('cop-total-kg').textContent=fmtTL(cops.reduce((s,r)=>s+r.tl,0));
   document.getElementById('fire-total-tl').textContent=thisMonth.reduce((s,r)=>s+r.tl,0).toFixed(0)+' ₺';
-  document.getElementById('fire-oran').textContent=totalSold>0?((totalKg/totalSold)*100).toFixed(1)+'%':'—';
+  document.getElementById('fire-oran').textContent=thisMonth.length+' kayıt';
 }
 
 // ============================================================
@@ -1249,7 +1326,7 @@ async function renderSkt(filter){
     return { name:r.urun_adi, stock:Number(r.stok)||0, skt:r.skt, daysLeft:diff, sktDate };
   });
   items.sort((a,b)=>a.daysLeft-b.daysLeft);
-  document.getElementById('badge-skt').textContent=items.filter(p=>p.daysLeft<=7).length;
+  const sktN=items.filter(p=>p.daysLeft<=7).length; const sb2=document.getElementById('badge-skt'); sb2.textContent=sktN; sb2.style.display=sktN?'':'none';
   document.getElementById('skt-list').innerHTML=items.map(p=>{
     const urgent=p.daysLeft<=3;
     const soon=p.daysLeft<=7;
@@ -1262,7 +1339,7 @@ async function renderSkt(filter){
       </div>
       <div class="skt-info">
         <div class="skt-name">${p.name}</div>
-        <div class="skt-detail">SKT: ${p.skt} — Stok: ${p.stock.toFixed(2)} kg</div>
+        <div class="skt-detail">SKT: ${p.skt} — Stok: ${fmtSayi(p.stock)}</div>
       </div>
       <div class="skt-action">
         ${urgent?'<span class="badge badge-red">ACİL</span>':soon?'<span class="badge badge-amber">Yakın</span>':'<span class="badge badge-green">Normal</span>'}
@@ -1366,20 +1443,31 @@ async function saveNewCari(){
 // ============================================================
 // RAPORLAR
 // ============================================================
+// Sağ üstteki "Bugün / Satış" — yerel saate göre bugünün gerçek satışları
+function bugunBaslangic(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function ayBaslangic(){ const d=new Date(); d.setDate(1); d.setHours(0,0,0,0); return d; }
+async function gunlukOzetGuncelle(){
+  if(!MAGAZA_ID) return null;
+  const o=await satisOzetiGetir(bugunBaslangic());
+  document.getElementById('today-total').textContent=Math.round(o.ciro).toLocaleString('tr-TR')+' ₺';
+  document.getElementById('today-count').textContent=o.adet;
+  return o;
+}
 async function renderReport(){
-  const gunluk=await gunlukRaporGetir();
-  document.getElementById('rep-bugun').textContent=gunluk?Number(gunluk.toplam_ciro).toLocaleString('tr-TR',{minimumFractionDigits:2})+' ₺':'0,00 ₺';
-  document.getElementById('rep-ort').textContent=gunluk?Number(gunluk.ortalama_sepet).toFixed(0)+' ₺':'0 ₺';
-  document.getElementById('today-total').textContent=gunluk?Number(gunluk.toplam_ciro).toFixed(0)+' ₺':'0 ₺';
-  document.getElementById('today-count').textContent=gunluk?gunluk.satis_sayisi:0;
-  document.getElementById('rep-ay').textContent='—'; // aylık rapor fonksiyonu henüz yok
+  const bugun=await gunlukOzetGuncelle()||{adet:0,ciro:0};
+  document.getElementById('rep-bugun').textContent=fmtTL(bugun.ciro);
+  document.getElementById('rep-bugun-sub').textContent=bugun.adet+' işlem';
+  document.getElementById('rep-ort').textContent=bugun.adet?fmtTL(bugun.ciro/bugun.adet):'—';
+  const ay=await satisOzetiGetir(ayBaslangic());
+  document.getElementById('rep-ay').textContent=fmtTL(ay.ciro);
 
   const haftalik=await haftalikSatislariGetir();
   const days=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
   const gunToplam={};
-  haftalik.forEach(s=>{ const key=s.created_at.slice(0,10); gunToplam[key]=(gunToplam[key]||0)+Number(s.toplam_tutar); });
+  const yerelGun=d=>{ d=new Date(d); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  haftalik.forEach(s=>{ const key=yerelGun(s.created_at); gunToplam[key]=(gunToplam[key]||0)+Number(s.toplam_tutar); });
   const son7=[];
-  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); son7.push(d.toISOString().slice(0,10)); }
+  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); son7.push(yerelGun(d)); }
   const vals=son7.map(k=>gunToplam[k]||0);
   const haftaToplam=vals.reduce((s,v)=>s+v,0);
   document.getElementById('rep-hafta').textContent=haftaToplam.toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺';
@@ -1389,12 +1477,12 @@ async function renderReport(){
       <div class="chart-bar" style="height:${Math.round(v/max*100)}%;background:${i===6?'var(--accent)':'var(--bg3)'}"></div>
     </div>`).join('');
   document.getElementById('report-chart-labels').innerHTML=son7.map((k,i)=>{
-    const label=days[(new Date(k).getDay()+6)%7];
+    const label=days[(new Date(k+'T12:00:00').getDay()+6)%7];
     return `<div style="flex:1;text-align:center;font-size:10px;color:${i===6?'var(--accent)':'var(--text3)'}">${label}</div>`;
   }).join('');
 
   let nakitToplam=0,kartToplam=0;
-  haftalik.forEach(s=>{ if(s.odeme_yontemi==='kart') kartToplam+=Number(s.toplam_tutar); else nakitToplam+=Number(s.toplam_tutar); });
+  haftalik.forEach(s=>{ kartToplam+=Number(s.kart_tutar??(s.odeme_yontemi==='kart'?s.toplam_tutar:0)); nakitToplam+=Number(s.nakit_tutar??(s.odeme_yontemi!=='kart'?s.toplam_tutar:0)); });
   const toplamOdeme=nakitToplam+kartToplam||1;
   document.getElementById('payment-breakdown').innerHTML=`
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -1470,10 +1558,59 @@ async function girisSonrasiHazirla(magaza){
   document.getElementById('authScreen').style.display='none';
   document.getElementById('appShell').style.display='flex';
   realtimeBaslat();
+  ayarlariUygula();
   await refreshProducts();
   await refreshCari();
   renderPosProducts();
   updateBadges();
+  gunlukOzetGuncelle();
+  setInterval(gunlukOzetGuncelle, 60000);
+}
+
+// ============================================================
+// MAĞAZA AYARLARI (terazi / yazıcı)
+// ============================================================
+function ayarlariUygula(){
+  const ad=MAGAZA_ADI||'Mağaza';
+  document.getElementById('user-name').textContent=ad;
+  document.getElementById('user-avatar').textContent=ad.trim().charAt(0).toLocaleUpperCase('tr');
+  const t=teraziAktif();
+  document.getElementById('nav-scale').style.display=t?'':'none';
+  document.getElementById('pos-scale-bar').style.display=t?'':'none';
+  const durum=document.getElementById('cihaz-durum');
+  if(durum) durum.style.display=(t||MAGAZA_AYAR.yazici)?'flex':'none';
+  const td=document.getElementById('terazi-durum-satir'); if(td) td.style.display=t?'flex':'none';
+  const yd=document.getElementById('yazici-durum'); if(yd) yd.style.display=MAGAZA_AYAR.yazici?'':'none';
+  if(t) teraziBaglan(); else teraziKapat();
+  if(MAGAZA_AYAR.yazici) yaziciDurumGoster();
+}
+function showSettings(){
+  openModal('Mağaza Ayarları',`
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">${esc(MAGAZA_ADI)}</strong></div>
+      <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">
+        <input type="checkbox" id="ay-terazi" ${teraziAktif()?'checked':''} style="margin-top:3px"/>
+        <span><span style="color:var(--text);font-size:13px">Bu dükkanda terazi var</span><br>
+        <span style="font-size:11px;color:var(--text3)">Açıksa "Tartılı Satış" ekranı görünür ve kg/gram ürünlerde miktar teraziden okunur (mağaza bilgisayarında terazi servisi çalışmalı). Kapalıyken kg ürünlerde miktar elle girilir.</span></span>
+      </label>
+      <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">
+        <input type="checkbox" id="ay-yazici" ${MAGAZA_AYAR.yazici?'checked':''} style="margin-top:3px"/>
+        <span><span style="color:var(--text);font-size:13px">Etiket yazıcısı servisi var (Zebra / Argox)</span><br>
+        <span style="font-size:11px;color:var(--text3)">Kapalıyken etiketler tarayıcıdan yazdırılır.</span></span>
+      </label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button class="btn btn-sm" onclick="cikisYap()">Çıkış Yap</button>
+        <div style="flex:1"></div>
+        <button class="btn" onclick="closeModal()">İptal</button>
+        <button class="btn btn-accent" onclick="saveSettings()">Kaydet</button>
+      </div>
+    </div>`);
+}
+async function saveSettings(){
+  try{
+    await magazaAyarKaydet({ terazi: document.getElementById('ay-terazi').checked, yazici: document.getElementById('ay-yazici').checked });
+    closeModal(); ayarlariUygula(); renderPosProducts(); notify('✓ Ayarlar kaydedildi');
+  }catch(e){ notify('Kaydedilemedi: '+e.message); }
 }
 
 // Sayfa yenilendiğinde açık oturum varsa otomatik gir
@@ -1526,8 +1663,8 @@ function teraziBaglan() {
     teraziWS.onclose = () => {
       teraziGercek = false;
       teraziDurumGuncelle(false);
-      // 3 saniyede tekrar bağlanmayı dene
-      setTimeout(teraziBaglan, 3000);
+      // Terazi ayarı açıksa 3 saniyede tekrar bağlanmayı dene
+      if (teraziAktif()) setTimeout(teraziBaglan, 3000);
     };
 
     teraziWS.onerror = () => {
@@ -1535,8 +1672,13 @@ function teraziBaglan() {
       teraziDurumGuncelle(false);
     };
   } catch(err) {
-    setTimeout(teraziBaglan, 5000);
+    if (teraziAktif()) setTimeout(teraziBaglan, 5000);
   }
+}
+
+function teraziKapat() {
+  if (teraziWS) { try { teraziWS.onclose = null; teraziWS.close(); } catch(e) {} teraziWS = null; }
+  teraziGercek = false; scaleWeight = 0;
 }
 
 function teraziDurumGuncelle(bagli) {
@@ -1569,8 +1711,7 @@ function terazeTare() {
 // resetScale fonksiyonunu terazi servisine yönlendir
 function resetScale() { terazeTare(); }
 
-// Sayfa yüklenince bağlanmayı dene
-setTimeout(teraziBaglan, 500);
+// Terazi bağlantısı girişten sonra, sadece ayarlarda "Terazi var" açıksa kurulur (ayarlariUygula)
 
 // ============================================================
 // YAZICI ENTEGRASYONu (Argox 214 + Zebra GC420T)
@@ -1583,6 +1724,7 @@ async function yaziciDurumKontrol() {
 }
 
 async function etiketYazdir(veri, yazici = 'zebra') {
+  if (!MAGAZA_AYAR.yazici) { etiketBrowserYazdir(veri); return; }
   // Önce servisi kontrol et
   const servisCalisiyor = await yaziciDurumKontrol();
   if (!servisCalisiyor) {
@@ -1656,11 +1798,15 @@ function printLabel() {
 
   const agirlikG = parseFloat(document.getElementById('lbl-weight').value) || 0;
   const customFiyat = parseFloat(document.getElementById('lbl-price').value);
-  const fiyatTl = customFiyat || (agirlikG ? p.price * agirlikG / 1000 : p.price);
+  const fiyatTl = customFiyat || (agirlikG && p.unit==='kg' ? p.price * agirlikG / 1000 : p.price);
   const skt = document.getElementById('lbl-skt').value;
   const adet = parseInt(document.getElementById('lbl-qty').value) || 1;
   const boyut = document.getElementById('lbl-size').value.replace(' mm','').replace('×','x');
 
+  if (!MAGAZA_AYAR.yazici) {
+    for (let i = 0; i < adet; i++) etiketBrowserYazdir({ urunAdi:p.name, agirlikKg:agirlikG/1000, fiyatTl, barkod:p.barcode, skt, boyut });
+    return;
+  }
   // Yazıcı seçimi modalı
   openModal('Yazıcı Seç', `
     <div style="display:flex;flex-direction:column;gap:12px">
@@ -1673,7 +1819,7 @@ function printLabel() {
           closeModal();
           Array.from({length:${adet}}).forEach(()=>
             etiketYazdir({
-              urunAdi:'${p.name}',
+              urunAdi:'${p.name.replace(/\\/g,'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}',
               agirlikKg:${agirlikG/1000},
               fiyatTl:${fiyatTl},
               barkod:'${p.barcode}',
@@ -1689,7 +1835,7 @@ function printLabel() {
           closeModal();
           Array.from({length:${adet}}).forEach(()=>
             etiketYazdir({
-              urunAdi:'${p.name}',
+              urunAdi:'${p.name.replace(/\\/g,'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}',
               agirlikKg:${agirlikG/1000},
               fiyatTl:${fiyatTl},
               barkod:'${p.barcode}',
@@ -1712,9 +1858,10 @@ function printLabel() {
   const sb = document.querySelector('.sidebar-bottom');
   if (!sb) return;
   const div = document.createElement('div');
-  div.style.cssText = 'padding:8px 12px;display:flex;flex-direction:column;gap:6px';
+  div.id = 'cihaz-durum';
+  div.style.cssText = 'padding:8px 12px;display:none;flex-direction:column;gap:6px';
   div.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+    <div id="terazi-durum-satir" style="display:flex;align-items:center;gap:6px;font-size:11px">
       <div class="scale-led" style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
       <span class="scale-conn-label" style="color:var(--red)">TEM — Bağlanamadı</span>
     </div>
@@ -1722,7 +1869,8 @@ function printLabel() {
   `;
   sb.insertBefore(div, sb.firstChild);
 
-  // Yazıcı durumunu kontrol et
+})();
+function yaziciDurumGoster(){
   yaziciDurumKontrol().then(ok => {
     const el = document.getElementById('yazici-durum');
     if (el) {
@@ -1730,7 +1878,7 @@ function printLabel() {
       el.style.color = ok ? 'var(--accent)' : 'var(--text3)';
     }
   });
-})();
+}
 </script>
 </body>
 </html>
